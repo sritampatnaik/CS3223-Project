@@ -416,10 +416,10 @@ public class RandomOptimizer{
 
 	    case JoinType.BLOCKNESTED:
 
-			NestedJoin bj = new BlockNested((Join) node);
-			nj.setLeft(left);
-			nj.setRight(right);
-			nj.setNumBuff(numbuff);
+			BlockNested bj = new BlockNested((Join) node);
+			bj.setLeft(left);
+			bj.setRight(right);
+			bj.setNumBuff(numbuff);
                 /* + other code */
 		return bj;
 
