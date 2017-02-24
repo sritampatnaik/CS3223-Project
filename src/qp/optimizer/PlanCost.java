@@ -146,7 +146,7 @@ public class PlanCost{
 	    joincost = leftpages*rightpages;
 	    break;
 	case JoinType.BLOCKNESTED:
-	    joincost = leftpages+Math.ceil(leftpages/Batch.getPageSize())*rightpages;
+	    joincost = leftpages+(int)Math.ceil(leftpages/Batch.getPageSize())*rightpages;
 	    break;
 	case JoinType.SORTMERGE:
 	    joincost = 0;

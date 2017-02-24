@@ -50,13 +50,13 @@ public class BlockNested extends Join{
 
 		/** initialize the cursors of input buffers **/
 		lcurs = 0; 
-		rcurs =0;
-		eosl=false;
+		rcurs = 0;
+		eosl  = false;
 
 		/** because right stream is to be repetitively scanned
 		 ** if it reached end, we have to start new scan
 		 **/
-		eosr=true;
+		eosr  = true;
 
 		/** Right hand side table is to be materialized
 		 ** for the Nested join to perform
@@ -72,20 +72,21 @@ public class BlockNested extends Join{
 
 		    //if(right.getOpType() != OpType.SCAN){
 		    filenum++;
-		    rfname = "NJtemp-" + String.valueOf(filenum);
+		    rfname = "BJtemp-" + String.valueOf(filenum);
 		    try{
-			ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(rfname));
-			while( (rightpage = right.next()) != null){
-			    out.writeObject(rightpage);
-			}
-			out.close();
-		    }catch(IOException io){
-			System.out.println("BlockNested:writing the temporay file error");
-			return false;
+				ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(rfname));
+				while ((rightpage = right.next()) != null){
+				    out.writeObject(rightpage);
+				}
+				out.close();
+		    } catch (IOException io){
+				System.out.println("BlockNested:writing the temporary file error");
+				return false;
 		    }
 			//}
-		    if(!right.close())
-			return false;
+		    if (!right.close()){
+		    	return false;
+		    }
 		}
 		if (left.open()){
 		    return true;
@@ -108,11 +109,12 @@ public class BlockNested extends Join{
 		}
 		outbatch = new Batch(batchsize);
 		while(!outbatch.isFull()){
-		    if(lcurs==0 && eosr==true){
+		    if(lcurs == 0 && eosr == true){
+
 				/** new left page is to be fetched**/
-				leftbatch =(Batch) left.next();
-				if (leftbatch==null){
-				    eosl=true;
+				leftbatch = (Batch)left.next();
+				if (leftbatch == null){
+				    eosl = true;
 				    return outbatch;
 				}
 
@@ -130,35 +132,34 @@ public class BlockNested extends Join{
 
 		    while (eosr==false) {
 				try {
-				    if(rcurs==0 && lcurs==0){
-						rightbatch = (Batch) in.readObject();
+				    if(rcurs == 0 && lcurs == 0){
+						rightbatch = (Batch)in.readObject();
 				    }
-				    for(i=lcurs;i<leftbatch.size();i++){
-						for(j=rcurs;j<rightbatch.size();j++){
+				    for(i = lcurs; i < leftbatch.size() ; i++){
+						for(j = rcurs; j < rightbatch.size() ; j++){
 						    Tuple lefttuple = leftbatch.elementAt(i);
 						    Tuple righttuple = rightbatch.elementAt(j);
-						    if(lefttuple.checkJoin(righttuple,leftindex,rightindex)){
-							Tuple outtuple = lefttuple.joinWith(righttuple);
-
-							//Debug.PPrint(outtuple);
-							//System.out.println();
-							outbatch.add(outtuple);
-							if(outbatch.isFull()){
-							    if(i==leftbatch.size()-1 && j==rightbatch.size()-1){//case 1
-								lcurs=0;
-								rcurs=0;
-							    }else if(i!=leftbatch.size()-1 && j==rightbatch.size()-1){//case 2
-								lcurs = i+1;
-								rcurs = 0;
-							    }else if(i==leftbatch.size()-1 && j!=rightbatch.size()-1){//case 3
-								lcurs = i;
-								rcurs = j+1;
-							    }else{
-								lcurs = i;
-								rcurs =j+1;
-							    }
-							    return outbatch;
-							}
+						    if (lefttuple.checkJoin(righttuple,leftindex,rightindex)){
+								Tuple outtuple = lefttuple.joinWith(righttuple);
+								//Debug.PPrint(outtuple);
+								//System.out.println();
+								outbatch.add(outtuple);
+								if (outbatch.isFull()){
+								    if(i == (leftbatch.size()-1) && j == (rightbatch.size()-1)){        //case 1
+										lcurs = 0;
+										rcurs = 0;
+								    } else if (i != (leftbatch.size()-1) && j == (rightbatch.size()-1)){//case 2
+										lcurs = i+1;
+										rcurs = 0;
+								    } else if (i == (leftbatch.size()-1) && j != (rightbatch.size()-1)){//case 3
+										lcurs = i;
+										rcurs = j+1;
+								    } else{
+										lcurs = i;
+										rcurs = j+1;
+								    }
+								    return outbatch;
+								}
 						    }
 						}
 						rcurs =0;
@@ -166,9 +167,9 @@ public class BlockNested extends Join{
 				    lcurs=0;
 				} catch (EOFException e){
 				    try {
-					in.close();
+						in.close();
 				    } catch (IOException io){
-					System.out.println("BlockNested:Error in temporary file reading");
+						System.out.println("BlockNested:Error in temporary file reading");
 				    }
 				    eosr=true;
 				} catch (ClassNotFoundException c){
