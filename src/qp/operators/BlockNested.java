@@ -1,4 +1,4 @@
-/** page nested join algorithm **/
+/** block nested join algorithm **/
 
 package qp.operators;
 
@@ -9,24 +9,22 @@ import java.lang.*;
 
 public class BlockNested extends Join{
 
-	int batchsize;  //Number of tuples per out batch
+    int batchsize;        // Number of tuples per out batch
+    int leftindex;        // Index of the join attribute in left table
+    int rightindex;       // Index of the join attribute in right table
+    String rfname;        // The file name where the right table is materialize
 
-    int leftindex;     // Index of the join attribute in left table
-    int rightindex;    // Index of the join attribute in right table
+    static int filenum=0; // To get unique filenum for this operation
 
-    String rfname;    // The file name where the right table is materialize
-
-    static int filenum=0;   // To get unique filenum for this operation
-
-    Batch outbatch;   // Output buffer
-    Batch leftbatch;  // Buffer for left input stream
-    Batch rightbatch;  // Buffer for right input stream
+    Batch outbatch;       // Output buffer
+    Batch leftbatch;      // Buffer for left input stream
+    Batch rightbatch;     // Buffer for right input stream
     ObjectInputStream in; // File pointer to the right hand materialized file
 
-    int lcurs;    // Cursor for left side buffer
-    int rcurs;    // Cursor for right side buffer
-    boolean eosl;  // Whether end of stream (left table) is reached
-    boolean eosr;  // End of stream (right table)
+    int lcurs;            // Cursor for left side buffer
+    int rcurs;            // Cursor for right side buffer
+    boolean eosl;         // Whether end of stream (left table) is reached
+    boolean eosr;         // End of stream (right table)
 
     public BlockNested(Join jn){
 		super(jn.getLeft(), jn.getRight(), jn.getCondition(), jn.getOpType());
@@ -104,34 +102,30 @@ public class BlockNested extends Join{
 		//Debug.PPrint(con);
 		//System.out.println();
 		int i,j;
-		if(eosl){
+		if (eosl) {
 			close();
 		    return null;
 		}
 		outbatch = new Batch(batchsize);
-
-
 		while(!outbatch.isFull()){
-
 		    if(lcurs==0 && eosr==true){
-			/** new left page is to be fetched**/
-			leftbatch =(Batch) left.next();
-			if(leftbatch==null){
-			    eosl=true;
-			    return outbatch;
-			}
-			/** Whenver a new left page came , we have to start the
-			 ** scanning of right table
-			 **/
-			try{
+				/** new left page is to be fetched**/
+				leftbatch =(Batch) left.next();
+				if (leftbatch==null){
+				    eosl=true;
+				    return outbatch;
+				}
 
-			    in = new ObjectInputStream(new FileInputStream(rfname));
-			    eosr=false;
-			}catch(IOException io){
-			    System.err.println("BlockNested:error in reading the file");
-			    System.exit(1);
-			}
-
+				/** Whenver a new left page came , we have to start the
+				 ** scanning of right table
+				 **/
+				try {
+				    in = new ObjectInputStream(new FileInputStream(rfname));
+				    eosr=false;
+				} catch(IOException io){
+				    System.err.println("BlockNested:error in reading the file");
+				    System.exit(1);
+				}
 		    }
 
 		    while (eosr==false) {
