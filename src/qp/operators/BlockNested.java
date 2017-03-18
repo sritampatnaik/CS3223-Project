@@ -120,12 +120,11 @@ public class BlockNested extends Join{
 
     // TODO : change to iterator model
 
-    public Tuple interatorNext(){
-
-    	// loading 1 block fo S
+    public Batch getBatch(String fname){
+    	Batch parsed_batch = null;
 		try {
-		    s = new ObjectInputStream(new FileInputStream(rfname));
-		    rightbatch = (Batch)s.readObject();
+		    ObjectInputStream obj = new ObjectInputStream(new FileInputStream(fname));
+		    parsed_batch = (Batch)obj.readObject();
 		} catch(IOException io){
 		    System.err.println("BlockNested:error in reading the s file");
 		    System.exit(1);
@@ -133,30 +132,33 @@ public class BlockNested extends Join{
 		    System.out.println("BlockNested:Some error in deserialization s");
 		    System.exit(1);
 		} 
+		return parsed_batch;
+    }
 
-		// loading B-2 blocks of R
-    	try {
-		    r = new ObjectInputStream(new FileInputStream(lfname));
-		    leftbatch = (Batch)r.readObject();
-		} catch(IOException io){
-		    System.err.println("BlockNested:error in reading the r file");
-		    System.exit(1);
-		} catch (ClassNotFoundException c){
-		    System.out.println("BlockNested:Some error in deserialization r");
-		    System.exit(1);
-		} 
+    public Tuple interatorNext(){
 
+    	leftbatch = getBatch(lfname);
+    	rightbatch = getBatch(rfname);
 
 		while (true){
 			
 			if (eosl == true){
 	    		break;
 	    	}
+
 			// if S finish iterating current page
 			if (rcurs > (rightbatch.size()-1)){
 			    try{
 			    	// get next page of S
 					rightpage = right.next();
+
+					if (rightpage == null){
+						System.out.printf("rpage null\n");
+					} else {
+						System.out.printf("rpage length: %d\n", rightpage.size());
+					}
+					
+
 					while (rightpage != null && rightpage.size() == 0){
 						rightpage = right.next();
 					}
@@ -168,29 +170,15 @@ public class BlockNested extends Join{
 						right.close();
 						right.open();
 						rightpage = right.next();
-					} else {
 					}
-
-					//// write next page of S into "memory"
-					// purge existing S page file
-					// File f = new File(rfname);
-					// f.delete();
 					// write new right page
 					ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(rfname));
 
 				    out.writeObject(rightpage);
 					out.close();					
 
-					try {
-					    s = new ObjectInputStream(new FileInputStream(rfname));
-					    rightbatch = (Batch)s.readObject();
-					} catch(IOException io){
-					    System.err.println("BlockNested:error in reading the s file");
-					    System.exit(1);
-					} catch (ClassNotFoundException c){
-					    System.out.println("BlockNested:Some error in deserialization s");
-					    System.exit(1);
-					} 
+					rightbatch = getBatch(rfname);
+
 					// reset right cursor
 					rcurs = 0;
 			    } catch (IOException io){
@@ -223,16 +211,7 @@ public class BlockNested extends Join{
 						}
 						out.close();
 
-						try {
-						    r = new ObjectInputStream(new FileInputStream(lfname));
-						    leftbatch = (Batch)r.readObject();
-						} catch(IOException io){
-						    System.err.println("BlockNested:error in reading the r file");
-						    System.exit(1);
-						} catch (ClassNotFoundException c){
-						    System.out.println("BlockNested:Some error in deserialization r");
-						    System.exit(1);
-						} 
+						leftbatch = getBatch(lfname);
 					}
 			    } catch (IOException io){
 					System.out.println("BlockNested:writing the temporary file error");
@@ -339,8 +318,6 @@ public class BlockNested extends Join{
 		int i,j;
 		
 		Tuple nextTuple = interatorNext();
-
-
 
 		if (nextTuple == null){
 			return null;
@@ -464,7 +441,7 @@ public class BlockNested extends Join{
     public boolean close(){
 		File f = new File(lfname);
 		f.delete();
-		File f = new File(rfname);
+		f = new File(rfname);
 		f.delete();
 		return true;
     }
