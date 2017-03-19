@@ -30,6 +30,7 @@ public class BlockNested extends Join{
     int rcurs;            // Cursor for right side buffer
     boolean eosl;         // Whether end of stream (left table) is reached
     boolean eosr;         // End of stream (right table)
+    Operator originalRight;
     
     public BlockNested(Join jn){
 		super(jn.getLeft(), jn.getRight(), jn.getCondition(), jn.getOpType());
@@ -48,6 +49,8 @@ public class BlockNested extends Join{
 		int tuplesize       = schema.getTupleSize();
 		int pageSize        = Batch.getPageSize();
 		int leftTracker     = 1;  // 1 based so that it is easier to debug and read
+
+		originalRight = (Operator)right.clone();
 
 		batchsize           = pageSize/tuplesize;
 		Attribute leftattr  = con.getLhs();
@@ -145,6 +148,7 @@ public class BlockNested extends Join{
 			if (eosl == true){
 	    		break;
 	    	}
+	    	System.out.printf("rcurs= %d/%d, lcurs = %d/%d\n",rcurs,rightbatch.size(),lcurs,leftbatch.size());
 
 			// if S finish iterating current page
 			if (rcurs > (rightbatch.size()-1)){
@@ -152,19 +156,8 @@ public class BlockNested extends Join{
 			    	// get next page of S
 					rightpage = right.next();
 
-					if (rightpage == null){
-						System.out.printf("rpage null\n");
-					} else {
-						System.out.printf("rpage length: %d\n", rightpage.size());
-					}
-					
-
-					while (rightpage != null && rightpage.size() == 0){
-						rightpage = right.next();
-					}
-
-					// next page of S doest exist ie. finished checking for current r tuple
-					if (rightpage == null){
+					// next page of S is null ie. finished checking for current r 
+					if (rightpage == null || rightpage.size() == 0){
 						lcurs += 1; // increament to next r tuple
 						// reset right
 						right.close();
@@ -193,7 +186,7 @@ public class BlockNested extends Join{
 				// case where finish the current B-2 batch of R
 			    try{
 					leftpage = left.next();
-					if (leftpage == null){
+					if (leftpage == null || leftpage.size()==0){
 						// case of no more next page of R ie. finished joining
 						System.out.println("finished block nested join");
 						eosl = true;
@@ -209,8 +202,10 @@ public class BlockNested extends Join{
 						    leftTracker++;
 						    leftpage = left.next();
 						}
-						out.close();
+						out.writeObject(leftpage);
 
+						out.close();
+						lcurs = 0;
 						leftbatch = getBatch(lfname);
 					}
 			    } catch (IOException io){
@@ -222,9 +217,12 @@ public class BlockNested extends Join{
 			Tuple nextLeft = leftbatch.elementAt(lcurs);
 			Tuple nextRight = rightbatch.elementAt(rcurs++);
 			
+			
+
 			// found matching tuple, return tuple
 			if (nextLeft.checkJoin(nextRight,leftindex,rightindex)){
 				System.out.println("MATCH!");
+
 				return nextLeft.joinWith(nextRight);
 			}
 
@@ -439,6 +437,7 @@ public class BlockNested extends Join{
 
     /** Close the operator */
     public boolean close(){
+    	System.out.println(lfname);
 		File f = new File(lfname);
 		f.delete();
 		f = new File(rfname);
