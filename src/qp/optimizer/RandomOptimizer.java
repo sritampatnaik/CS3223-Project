@@ -7,6 +7,7 @@ import qp.utils.*;
 import qp.operators.*;
 import java.lang.Math;
 import java.util.Vector;
+import java.util.Random;
 
 public class RandomOptimizer{
 
@@ -15,6 +16,8 @@ public class RandomOptimizer{
     public static final int  METHODCHOICE =0;  //selecting neighbor by changing a method for an operator
     public static final int COMMUTATIVE =1;   // by rearranging the operators by commutative rule
     public static final int ASSOCIATIVE =2;  // rearranging the operators by associative rule
+    public static final int DEFAULTT = 10000;
+    public static final double COOLINGRATE = 0.003;
 
     /** Number of altenative methods available for a node as specified above**/
 
@@ -60,6 +63,9 @@ public class RandomOptimizer{
 	return neighbor;
     }
 
+    public double reduceT(double T){
+    	return T * 1 - (COOLINGRATE);
+    }
 
 
     /** implementation of Iterative Improvement Algorithm
@@ -69,13 +75,14 @@ public class RandomOptimizer{
     public Operator getOptimizedPlan(){
 
 	/** get an initial plan for the given sql query **/
-
+	Random rand = new Random();
 	RandomInitialPlan rip = new RandomInitialPlan(sqlquery);
 	 numJoin = rip.getNumJoins();
 
 	int MINCOST = Integer.MAX_VALUE;
 	Operator finalPlan = null;
 
+	double t = DEFAULTT;
 
 	/** NUMTER is number of times random restart **/
 
@@ -107,7 +114,7 @@ public class RandomOptimizer{
 	    if(numJoin !=0){
 
 		while(flag){   // flag = false when local minimum is reached
- System.out.println("---------------while--------");
+ 			System.out.println("---------------while--------");
 		    Operator initPlanCopy = (Operator) initPlan.clone();
 		    minNeighbor = getNeighbor(initPlanCopy);
 
@@ -123,21 +130,29 @@ public class RandomOptimizer{
 		     **/
 
 		    for(int i=1;i<2*numJoin;i++){
-			initPlanCopy= (Operator) initPlan.clone();
-			Operator neighbor = getNeighbor(initPlanCopy);
-			System.out.println("------------------neighbor--------------");
-			Debug.PPrint(neighbor);
-			pc=new PlanCost();
-			int neighborCost = pc.getCost(neighbor);
-			System.out.println(neighborCost);
+				initPlanCopy= (Operator) initPlan.clone();
+				Operator neighbor = getNeighbor(initPlanCopy);
+				System.out.println("------------------neighbor--------------");
+				Debug.PPrint(neighbor);
+				pc=new PlanCost();
+				int neighborCost = pc.getCost(neighbor);
+				System.out.println(neighborCost);
 
-
-			if(neighborCost<minNeighborCost){
-			    minNeighbor = neighbor;
-			    minNeighborCost = neighborCost;
+				if(neighborCost<minNeighborCost){
+				    minNeighbor = neighbor;
+				    minNeighborCost = neighborCost;
+				} else {
+					int diff = neighborCost - minNeighborCost;
+					double probability = Math.exp(-diff/t);
+					System.out.printf("prob: %f\n", probability);
+					if (rand.nextDouble() < probability){
+						System.out.println("MAGICCCCCC");
+						minNeighbor = neighbor;
+				    	minNeighborCost = neighborCost;
+					}
+				}
+				// System.out.println("-----------------for-------------");
 			}
-			// System.out.println("-----------------for-------------");
-		    }
 		    if(minNeighborCost<initCost){
 			initPlan = minNeighbor;
 			initCost = minNeighborCost;
@@ -146,7 +161,8 @@ public class RandomOptimizer{
 			minNeighborCost = initCost;
 
 			flag = false;   // local minimum reached
-		    }
+	    }
+	     t = reduceT(t);
 		}
 		System.out.println("------------------local minimum--------------");
 		Debug.PPrint(minNeighbor);

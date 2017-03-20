@@ -81,12 +81,14 @@ public class BlockNested extends Join{
 		    try{
 				ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(lfname));
 				leftpage = left.next();
-				while (leftpage != null && leftTracker < (numBuff - 2)){
+				while (leftpage != null && leftpage.size() != 0 && leftTracker < (numBuff - 3)){
 				    out.writeObject(leftpage);
 				    leftTracker++;
 				    leftpage = left.next();
 				}
+				out.writeObject(leftpage);
 				out.close();
+				System.out.println(leftTracker);
 		    } catch (IOException io){
 				System.out.println("BlockNested:writing the temporary file error");
 				return false;
@@ -103,7 +105,7 @@ public class BlockNested extends Join{
 		    try{
 				ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(rfname));
 				rightpage = right.next();
-				if (rightpage == null){
+				if (rightpage == null || rightpage.size() == 0) {
 					return false;
 				}
 				out.writeObject(rightpage);
@@ -135,6 +137,7 @@ public class BlockNested extends Join{
 		    System.out.println("BlockNested:Some error in deserialization s");
 		    System.exit(1);
 		} 
+		System.out.printf("%s : %d \n",fname, parsed_batch.size());
 		return parsed_batch;
     }
 
@@ -148,7 +151,7 @@ public class BlockNested extends Join{
 			if (eosl == true){
 	    		break;
 	    	}
-	    	System.out.printf("rcurs= %d/%d, lcurs = %d/%d\n",rcurs,rightbatch.size(),lcurs,leftbatch.size());
+	    	// System.out.printf("rcurs= %d/%d, lcurs = %d/%d\n",rcurs,rightbatch.size(),lcurs,leftbatch.size());
 
 			// if S finish iterating current page
 			if (rcurs > (rightbatch.size()-1)){
@@ -166,7 +169,6 @@ public class BlockNested extends Join{
 					}
 					// write new right page
 					ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(rfname));
-
 				    out.writeObject(rightpage);
 					out.close();					
 
@@ -197,10 +199,11 @@ public class BlockNested extends Join{
 						
 						ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(lfname));
 						// keep writing new pages of R into the B-2 batch
-						while (leftpage != null && leftTracker < (numBuff - 2)){
+						while (leftpage != null && leftTracker < (numBuff - 3)){
 						    out.writeObject(leftpage);
 						    leftTracker++;
 						    leftpage = left.next();
+
 						}
 						out.writeObject(leftpage);
 
@@ -214,11 +217,11 @@ public class BlockNested extends Join{
 			    }
 			} 
 
+
+
 			Tuple nextLeft = leftbatch.elementAt(lcurs);
 			Tuple nextRight = rightbatch.elementAt(rcurs++);
 			
-			
-
 			// found matching tuple, return tuple
 			if (nextLeft.checkJoin(nextRight,leftindex,rightindex)){
 				System.out.println("MATCH!");
