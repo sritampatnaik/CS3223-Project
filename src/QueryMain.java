@@ -132,6 +132,9 @@ public class QueryMain{
 	// swap out random optimiser for greedy optimiser
 	GreedyOptimizer go = new GreedyOptimizer(sqlquery);
 	Operator logicalroot = go.getOptimizedPlan();
+// 	RandomOptimizer ro = new RandomOptimizer(sqlquery);
+// 	Operator logicalroot = ro.getOptimizedPlan();
+
 	if(logicalroot==null){
 	    System.out.println("root is null");
 	    System.exit(1);
