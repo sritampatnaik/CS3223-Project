@@ -31,6 +31,21 @@ public class Scan extends Operator {
     }
 
 
+    // approximates operator size 
+    public int getOperatorSize(){
+    	int count = 0;
+    	this.open();
+
+    	while(this.next() != null){
+				count++;
+    	}
+
+    	this.close();
+
+    	return count*this.batchsize;
+    }
+
+
     public String getTabName(){
 	return tabname;
     }

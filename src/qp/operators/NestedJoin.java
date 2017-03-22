@@ -212,6 +212,20 @@ public class NestedJoin extends Join{
 
     }
 
+    public int getOperatorSize(){
+        int count = 0;
+        this.open();
+
+        while(this.next() != null){
+                count++;
+        }
+
+        this.close();
+
+        return count*Batch.getPageSize()/this.schema.getTupleSize();
+    }
+
+
 
 }
 

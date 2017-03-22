@@ -28,7 +28,7 @@ public class RandomInitialPlan{
 
 
     public RandomInitialPlan(SQLQuery sqlquery){
-		this.sqlquery=sqlquery;
+		this.sqlquery =sqlquery;
 
 		projectlist=(Vector) sqlquery.getProjectList();
 		fromlist=(Vector) sqlquery.getFromList();
@@ -74,11 +74,9 @@ public class RandomInitialPlan{
  
 		for(int i=0;i<numtab;i++){  // For each table in from list
 
-
 		    String tabname = (String) fromlist.elementAt(i);
 		    Scan op1 = new Scan(tabname,OpType.SCAN);
 	            tempop = op1;
-
 
 		    /** Read the schema of the table from tablename.md file
 		     ** md stands for metadata
@@ -86,13 +84,13 @@ public class RandomInitialPlan{
 
 		    String filename = tabname+".md";
 		    try {
-			ObjectInputStream _if = new ObjectInputStream(new FileInputStream(filename));
-			Schema schm = (Schema) _if.readObject();
-			op1.setSchema(schm);
-			_if.close();
+				ObjectInputStream _if = new ObjectInputStream(new FileInputStream(filename));
+				Schema schm = (Schema) _if.readObject();
+				op1.setSchema(schm);
+				_if.close();
 		    } catch (Exception e) {
-			System.err.println("RandomInitialPlan:Error reading Schema of the table" + filename);
-			System.exit(1);
+				System.err.println("RandomInitialPlan:Error reading Schema of the table" + filename);
+				System.exit(1);
 		    }
 		    tab_op_hash.put(tabname,op1);
 		}

@@ -26,14 +26,14 @@ public class GreedyOptimizer {
 
     /** constructor **/
     public GreedyOptimizer(SQLQuery sqlquery){
-		this.sqlquery = sqlquery;
-	
-		this.projectlist=(Vector) sqlquery.getProjectList();
-		this.fromlist=(Vector) sqlquery.getFromList();
-		this.selectionlist= sqlquery.getSelectionList();
-		this.joinlist = sqlquery.getJoinList();
-		this.groupbylist = sqlquery.getGroupByList();
-		this.numJoin = joinlist.size();
+		this.sqlquery      = sqlquery;
+
+		this.projectlist   = (Vector) sqlquery.getProjectList();
+		this.fromlist      = (Vector) sqlquery.getFromList();
+		this.selectionlist = sqlquery.getSelectionList();
+		this.joinlist      = sqlquery.getJoinList();
+		this.groupbylist   = sqlquery.getGroupByList();
+		this.numJoin       = joinlist.size();
     }
 
     public Operator getOptimizedPlan(){
@@ -43,9 +43,7 @@ public class GreedyOptimizer {
     }
 
     public Operator prepareInitialPlan(){
-
 		tab_op_hash = new Hashtable();
-
 		createScanOp();
 		createSelectOp();
 		if (numJoin !=0) {
@@ -62,7 +60,7 @@ public class GreedyOptimizer {
 		int numtab = fromlist.size();
         Scan tempop = null;
  
-		for(int i=0;i<numtab;i++){  // For each table in from list
+		for(int i=0 ; i<numtab ; i++){  // For each table in from list
 
 		    String tabname = (String) fromlist.elementAt(i);
 		    Scan op1 = new Scan(tabname,OpType.SCAN);
@@ -103,7 +101,6 @@ public class GreedyOptimizer {
 		Select op1 = null;
 	     
 		for(int j=0;j<selectionlist.size();j++){
-
 		    Condition cn = (Condition) selectionlist.elementAt(j);
 		    if(cn.getOpType() == Condition.SELECT){
 				String tabname = cn.getLhs().getTabName();
@@ -133,10 +130,9 @@ public class GreedyOptimizer {
 		Join jn=null;
 		/** Repeat until all the join conditions are considered **/
 		while(bitCList.cardinality() != numJoin){
-		    /** If this condition is already consider chose
+		    /** If this condition is already considered chose
 		     ** another join condition
 		     **/
-
 		    while(bitCList.get(jnnum)){
 				jnnum = RandNumb.randInt(0,numJoin-1);
 		    }
@@ -160,6 +156,11 @@ public class GreedyOptimizer {
 
 		    modifyHashtable(left,jn);
 		    modifyHashtable(right,jn);
+
+		    Debug.PPrint(left);
+
+		    System.out.println(left.getOperatorSize());
+
 		    //tab_op_hash.put(lefttab,jn);
 		    //tab_op_hash.put(righttab,jn);
 
