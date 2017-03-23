@@ -88,7 +88,6 @@ public class BlockNested extends Join{
 				}
 				out.writeObject(leftpage);
 				out.close();
-				System.out.println(leftTracker);
 		    } catch (IOException io){
 				System.out.println("BlockNested:writing the temporary file error");
 				return false;
@@ -103,13 +102,13 @@ public class BlockNested extends Join{
 			rightfilenum++;
 		    rfname = "BJtemp-Right-" + String.valueOf(rightfilenum);
 		    try{
-				ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(rfname));
+				ObjectOutputStream out1 = new ObjectOutputStream(new FileOutputStream(rfname));
 				rightpage = right.next();
 				if (rightpage == null || rightpage.size() == 0) {
 					return false;
 				}
-				out.writeObject(rightpage);
-				out.close();
+				out1.writeObject(rightpage);
+				out1.close();
 		    } catch (IOException io){
 				System.out.println("BlockNested:writing the temporary file error");
 				return false;
@@ -137,7 +136,6 @@ public class BlockNested extends Join{
 		    System.out.println("BlockNested:Some error in deserialization s");
 		    System.exit(1);
 		} 
-		System.out.printf("%s : %d \n",fname, parsed_batch.size());
 		return parsed_batch;
     }
 
@@ -164,6 +162,7 @@ public class BlockNested extends Join{
 						lcurs += 1; // increament to next r tuple
 						// reset right
 						right.close();
+						right = (Operator)originalRight.clone();
 						right.open();
 						rightpage = right.next();
 					}
@@ -224,13 +223,10 @@ public class BlockNested extends Join{
 			
 			// found matching tuple, return tuple
 			if (nextLeft.checkJoin(nextRight,leftindex,rightindex)){
-				System.out.println("MATCH!");
-
 				return nextLeft.joinWith(nextRight);
 			}
 
 		}
-		System.out.println("returning null");
 		return null;
 
 	}
@@ -440,7 +436,6 @@ public class BlockNested extends Join{
 
     /** Close the operator */
     public boolean close(){
-    	System.out.println(lfname);
 		File f = new File(lfname);
 		f.delete();
 		f = new File(rfname);
