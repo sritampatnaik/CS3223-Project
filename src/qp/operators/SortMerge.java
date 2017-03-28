@@ -196,7 +196,7 @@ public class SortMerge extends Join{
                 toSendOutput = true;
             }
 
-            if (leftIndex <= rightIndex) {
+            if (leftIndex < rightIndex) {
                 lcurs++;
                 System.out.println("lcurs" + lcurs);
             } else {
@@ -212,7 +212,6 @@ public class SortMerge extends Join{
             }
 
             if(toSendOutput) {
-                Debug.PPrint(output);
                 toSendOutput = false;
                 return output;
             }
