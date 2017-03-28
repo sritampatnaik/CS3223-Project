@@ -32,8 +32,6 @@ public class BlockNested extends Join{
     
     // for debugging
     Tuple last = null;
-    int distinctRight = 1;
-    int distinctLeft = 1;
     
     public BlockNested(Join jn){
 		super(jn.getLeft(), jn.getRight(), jn.getCondition(), jn.getOpType());
@@ -62,12 +60,12 @@ public class BlockNested extends Join{
 		leftpage = new Batch(batchsize * (numBuff-2));
 		rightpage = new Batch(batchsize);
  
-		System.out.println("~~~~~~~~~~~~~~~~~~~~~~~");
-		System.out.printf("numBuff : %d\n", numBuff);
-		System.out.printf("pagesize : %d\n", pageSize);
-		System.out.printf("tuplesize : %d\n", tuplesize);
-		System.out.printf("batchsize : %d\n", batchsize);
-		System.out.println("~~~~~~~~~~~~~~~~~~~~~~~");
+		// System.out.println("~~~~~~~~~~~~~~~~~~~~~~~");
+		// System.out.printf("numBuff : %d\n", numBuff);
+		// System.out.printf("pagesize : %d\n", pageSize);
+		// System.out.printf("tuplesize : %d\n", tuplesize);
+		// System.out.printf("batchsize : %d\n", batchsize);
+		// System.out.println("~~~~~~~~~~~~~~~~~~~~~~~");
 
 		/** initialize the cursors of input buffers **/
 		lcurs = 0; 
@@ -122,8 +120,6 @@ public class BlockNested extends Join{
 				return false;
 		    }
 		}
-
-		System.out.printf("left: %d, right: %d \n",leftpage.size(),rightpage.size());
 		return true;
     }
 
@@ -241,21 +237,13 @@ public class BlockNested extends Join{
 			}
 			// found matching tuple, return tuple
 			if ( Tuple.compareTuples(last,nextLeft,0) == 0){
-				distinctRight++;
 			} else {
-				// System.out.printf("~count :%d  id:%d\n",distinctRight, last.dataAt(0));
 				last = nextLeft;
-				distinctRight = 1;
-				distinctLeft++;
 			}
-
-			// Debug.PPrint(nextLeft);
-			// Debug.PPrint(nextRight);
-			
 
 			if (nextLeft.checkJoin(nextRight,leftindex,rightindex)){
 				return nextLeft.joinWith(nextRight);
-			}
+			} 
 		}
 		return null;
 
@@ -266,24 +254,19 @@ public class BlockNested extends Join{
     }
 
     public Batch next(){
-		//System.out.print("BlockNested:--------------------------in next----------------");
-		// Debug.PPrint(con);
-		//System.out.println();
-		int i,j;
-		
+		Batch outbatch = new Batch(batchsize);
 		Tuple nextTuple = iteratorNext();
-
 		if (nextTuple == null){
 			return null;
-		}
-
-		outbatch = new Batch(batchsize);
-
-		while(!outbatch.isFull() && nextTuple != null){
+		} else {
 			outbatch.add(nextTuple);
-			nextTuple = iteratorNext();
 		}
-
+		for (int i = 1; i < batchsize; i ++){
+			if (nextTuple != null){
+				nextTuple = iteratorNext();
+			}
+			outbatch.add(nextTuple);
+		}
 		return outbatch;
     }
 
