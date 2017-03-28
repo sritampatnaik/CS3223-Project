@@ -97,6 +97,15 @@ public class Join extends Operator{
 
     }
 
+    // approximates operator size 
+    public int getOperatorSize(){
+        // assumes worst case senario of cross product given the lack of information
+        // hard to get actual size of table
+        return left.getOperatorSize()*right.getOperatorSize();
+    }
+
+
+
 }
 
 
