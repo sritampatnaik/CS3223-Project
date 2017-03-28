@@ -188,8 +188,8 @@ public class SortMerge extends Join{
             int leftIndex = (Integer) nextLeft.dataAt(leftindex);
             int rightIndex = (Integer) nextRight.dataAt(rightindex);
 
-            Debug.PPrint(nextLeft);
-            Debug.PPrint(nextRight);
+//            Debug.PPrint(nextLeft);
+//            Debug.PPrint(nextRight);
 
             if (leftIndex == rightIndex) {
                 output = nextLeft.joinWith(nextRight);
@@ -238,6 +238,7 @@ public class SortMerge extends Join{
             // add tuple if not null;
             if (nextTuple != null){
                 nextTuple = iteratorNext();
+                Debug.PPrint(nextTuple);
             }
             outbatch.add(nextTuple);
         }
