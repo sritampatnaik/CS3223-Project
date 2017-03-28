@@ -4,3 +4,5 @@ javac -d $COMPONENT/classes $COMPONENT/src/qp/operators/*.java
 javac -d $COMPONENT/classes $COMPONENT/src/qp/optimizer/*.java 
 javac -d $COMPONENT/classes $COMPONENT/testcases/*.java 
 javac -d $COMPONENT/classes $COMPONENT/src/QueryMain.java 
+
+echo "~build completed~"

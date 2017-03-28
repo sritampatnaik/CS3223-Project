@@ -1,6 +1,7 @@
 
 /**
-This is base class for all the operators **/
+*This is base class for all the operators 
+**/
 
 package qp.operators;
 
@@ -10,6 +11,7 @@ public class Operator{
 
     int optype;   //Whether it is OpType.SELECT/ Optype.PROJECT/OpType.JOIN
     Schema schema;   // Schema of the result at this operator
+    int operatorSize = -1;
 
     public Operator(int type){
 	this.optype = type;
@@ -44,6 +46,12 @@ public class Operator{
 	return null;
     }
 
+    public Tuple iteratorNext(){
+    System.out.println("Tuple:  ");
+    return null;
+    }
+
+
     public boolean close(){
 
 	return true;
@@ -52,6 +60,10 @@ public class Operator{
 
     public Object clone(){
 	return new Operator(optype);
+    }
+
+    public int getOperatorSize(){
+        return -1;
     }
 
 }

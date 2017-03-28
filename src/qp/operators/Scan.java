@@ -31,6 +31,21 @@ public class Scan extends Operator {
     }
 
 
+    // approximates operator size 
+    public int getOperatorSize(){
+    	int count = 0;
+    	this.open();
+
+    	while(this.next() != null){
+				count++;
+    	}
+
+    	this.close();
+
+    	return count*this.batchsize;
+    }
+
+
     public String getTabName(){
 	return tabname;
     }
@@ -62,6 +77,31 @@ public class Scan extends Operator {
     **
     ***/
 
+    public Tuple iteratorNext(){
+    	Tuple data = null;
+    	if(eos){
+			close();
+		    return null;
+		}
+		try {
+			data = (Tuple) in.readObject();
+		} catch(ClassNotFoundException cnf) {
+			System.err.println("Scan:Class not found for reading file  "+filename);
+			System.exit(1);
+		} catch (EOFException EOF) {    	
+			/** At this point incomplete page is sent and at next call it considered
+			 * as end of file
+			 **/
+			eos=true;
+			return null;
+		} catch (IOException e) {
+			System.out.println(e);
+			System.err.println("Scan:Error reading " + filename);
+			System.exit(1);
+	    }
+		return data;
+    }
+
     public Batch next() {
 
 	/** The file reached its end and no more to read **/
@@ -74,15 +114,23 @@ public class Scan extends Operator {
 	Batch tuples = new Batch(batchsize);
 
 	while(!tuples.isFull()){
+		Tuple data = null;
 	    try {
-		Tuple data = (Tuple) in.readObject();
+		data = (Tuple) in.readObject();
 		//System.out.print("SCAN:");
-		//Debug.PPrint(data);
+		// Debug.PPrint(data);
 		tuples.add(data);
 	    }catch(ClassNotFoundException cnf){
 		System.err.println("Scan:Class not found for reading file  "+filename);
 		System.exit(1);
 	    }catch (EOFException EOF) {
+	    	// System.out.println("EOFFF!!!");
+	    	// if (data != null){
+	    	// 	Debug.PPrint(data);
+	    	// } else {
+	    	// 	System.out.println("Null!!!");
+	    	// }
+	    	
 		/** At this point incomplete page is sent and at next call it considered
 		 ** as end of file
 		 **/
@@ -94,6 +142,7 @@ public class Scan extends Operator {
 	    }
 	}
 	return tuples;
+
     }
 
     /** Close the file.. This routine is called when the end of filed
@@ -103,6 +152,7 @@ public class Scan extends Operator {
 
     public boolean close() {
 	try {
+			// System.out.println("closing");
             in.close();
         } catch (IOException e) {
             System.err.println("Scan: Error closing " + filename);
