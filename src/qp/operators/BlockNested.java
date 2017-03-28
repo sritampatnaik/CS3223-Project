@@ -193,7 +193,6 @@ public class BlockNested extends Join{
 						}
 					}
 					if (eosl == true){
-						System.out.println("finished block nested join");
 						return null;
 					} else {						
 						ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(lfname));
