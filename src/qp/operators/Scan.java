@@ -77,6 +77,31 @@ public class Scan extends Operator {
     **
     ***/
 
+    public Tuple iteratorNext(){
+    	Tuple data = null;
+    	if(eos){
+			close();
+		    return null;
+		}
+		try {
+			data = (Tuple) in.readObject();
+		} catch(ClassNotFoundException cnf) {
+			System.err.println("Scan:Class not found for reading file  "+filename);
+			System.exit(1);
+		} catch (EOFException EOF) {    	
+			/** At this point incomplete page is sent and at next call it considered
+			 * as end of file
+			 **/
+			eos=true;
+			return null;
+		} catch (IOException e) {
+			System.out.println(e);
+			System.err.println("Scan:Error reading " + filename);
+			System.exit(1);
+	    }
+		return data;
+    }
+
     public Batch next() {
 
 	/** The file reached its end and no more to read **/

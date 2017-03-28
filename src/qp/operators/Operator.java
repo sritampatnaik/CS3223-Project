@@ -46,6 +46,12 @@ public class Operator{
 	return null;
     }
 
+    public Tuple iteratorNext(){
+    System.out.println("Tuple:  ");
+    return null;
+    }
+
+
     public boolean close(){
 
 	return true;
