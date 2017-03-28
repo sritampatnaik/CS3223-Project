@@ -197,10 +197,14 @@ public class SortMerge extends Join{
             }
 
             if (leftIndex < rightIndex) {
-                lcurs++;
+                if (lcurs < leftbatchsize) {
+                    lcurs++;
+                }
                 System.out.println("lcurs" + lcurs);
             } else {
-                rcurs++;
+                if (rcurs < rightbatchsize) {
+                    rcurs++;
+                }
                 System.out.println("rcurs" + rcurs);
             }
 
