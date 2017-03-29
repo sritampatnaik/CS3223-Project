@@ -10,6 +10,7 @@ public class Project extends Operator{
     Operator base;
     Vector attrSet;
 	int batchsize;  // number of tuples per outbatch
+	int i;
 
 
     /** The following fields are requied during execution
@@ -51,86 +52,106 @@ public class Project extends Operator{
      **/
 
     public boolean open(){
-	/** setnumber of tuples per batch **/
-	int tuplesize = schema.getTupleSize();
-	batchsize=Batch.getPageSize()/tuplesize;
+		/** setnumber of tuples per batch **/
+		int tuplesize = schema.getTupleSize();
+		batchsize=Batch.getPageSize()/tuplesize;
 
+		/** The followingl loop findouts the index of the columns that
+		 ** are required from the base operator
+		 **/
 
-	/** The followingl loop findouts the index of the columns that
-	 ** are required from the base operator
-	 **/
+		Schema baseSchema = base.getSchema();
+		attrIndex = new int[attrSet.size()];
+		for(int i=0;i<attrSet.size();i++){
+		    Attribute attr = (Attribute) attrSet.elementAt(i);
+	  	    int index = baseSchema.indexOf(attr);
+		    attrIndex[i]=index;
+		}
 
-	Schema baseSchema = base.getSchema();
-	attrIndex = new int[attrSet.size()];
-	//System.out.println("Project---Schema: ----------in open-----------");
-	//System.out.println("base Schema---------------");
-	//Debug.PPrint(baseSchema);
-	for(int i=0;i<attrSet.size();i++){
-	    Attribute attr = (Attribute) attrSet.elementAt(i);
-  	    int index = baseSchema.indexOf(attr);
-	    attrIndex[i]=index;
-
-	    //  Debug.PPrint(attr);
-	    //System.out.println("  "+index+"  ");
-	}
-
-	if(base.open())
-	    return true;
-	else
-	    return false;
+		if(base.open()){
+			// preloads the table and initialize pointer i
+			inbatch = base.next();
+			i = 0;
+		    return true;
+		}
+		else
+		    return false;
     }
 
-    /** Read next tuple from operator */
-
-    public Batch next(){
-	//System.out.println("Project:-----------------in next-----------------");
-	outbatch = new Batch(batchsize);
-
-	/** all the tuples in the inbuffer goes to the output
-	    buffer
-	**/
-
-	inbatch = base.next();
-	// System.out.println("Project:-------------- inside the next---------------");
-
-
-	if(inbatch == null){
-	    return null;
-	}
-	//System.out.println("Project:---------------base tuples---------");
-	for(int i=0;i<inbatch.size();i++){
-	    Tuple basetuple = inbatch.elementAt(i);
-	    //Debug.PPrint(basetuple);
-	    //System.out.println();
-	    Vector present = new Vector();
-	    for(int j=0;j<attrSet.size();j++){
-		Object data = basetuple.dataAt(attrIndex[j]);
-		present.add(data);
+    // The actual Iterator model for Project to get next tuple from Project
+    // but to not break the programme, iteratorNext() is wrapped by
+    // next() which returns a page of tuples (which is not compliant to iterator model)
+    public Tuple iteratorNext(){
+    	// if finish scanning current batch,
+    	// get next batch and reset pointer
+    	if (inbatch != null && i == inbatch.size()){
+    		inbatch = base.next();
+    		i = 0;
+    	}
+    	// if batch is null means done, return null
+    	if(inbatch == null || inbatch.size() == 0){
+		    return null;
+		}
+    	// project tuple	
+		Tuple basetuple = inbatch.elementAt(i++);
+		// next finish iteration, batch is empty
+		if (basetuple == null){
+			return null;
+		}
+		Vector present = new Vector();
+		for(int j=0;j<attrSet.size();j++){
+			try {
+				Object data = basetuple.dataAt(attrIndex[j]);
+				present.add(data);
+			} catch(Exception e) {
+				System.out.println(e);
+				System.out.printf("i: %d, inbatchsize: %d,j:%d ,attrSet: %d,", i,inbatch.size(),j,attrSet.size());
+			}
 	    }
-	    Tuple outtuple = new Tuple(present);
-	    outbatch.add(outtuple);
-	}
-	return outbatch;
+	    return new Tuple(present);
+    }
+
+	// the "wrong" next, not iterator model
+	// however to not break the system, we just
+	// use this and call iteratorNext() to get next tuple
+	// to fill up page to return;
+    public Batch next(){
+		outbatch = new Batch(batchsize);
+		// if first tuple is null, then no need to iteratre
+		// just return null straight
+		Tuple nextTuple = iteratorNext();
+		if (nextTuple == null){
+			return null;
+		}
+		outbatch.add(nextTuple);
+		// fill up tuples for batch and return
+		for(int n=1;n<batchsize;n++){ 
+		    nextTuple = iteratorNext();
+		    // add only if not null and
+		    // if encounter null means finished all,
+		    // just return what we have
+		    if (nextTuple != null){
+		    	outbatch.add(nextTuple);
+			} else {
+				break;
+			}
+		}
+		return outbatch;
     }
 
 
     /** Close the operator */
     public boolean close(){
+    	base.close();
 		return true;
-		/*
-	if(base.close())
-	    return true;
-	else
-	    return false;
-	    **/
     }
 
 
     public Object clone(){
 	Operator newbase = (Operator) base.clone();
 	Vector newattr = new Vector();
-	for(int i=0;i<attrSet.size();i++)
-	    newattr.add((Attribute) ((Attribute)attrSet.elementAt(i)).clone());
+	for(int x=0;x<attrSet.size();x++)
+	    newattr.add((Attribute) ((Attribute)attrSet.elementAt(x)).clone());
 	Project newproj = new Project(newbase,newattr,optype);
 	Schema newSchema = newbase.getSchema().subSchema(newattr);
 	newproj.setSchema(newSchema);

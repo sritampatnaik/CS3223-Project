@@ -29,7 +29,7 @@ public class BlockNested extends Join{
     int lcurs;            // Cursor for left side buffer
     int rcurs;            // Cursor for right side buffer
     boolean eosl;         // Whether end of stream (left table) is reached
-    
+    Tuple next,nextLeft,nextRight;
     Tuple last = null;
     
     public BlockNested(Join jn){
@@ -49,10 +49,18 @@ public class BlockNested extends Join{
 		int pageSize        = Batch.getPageSize();
 
 		batchsize           = pageSize/tuplesize;
+		if (batchsize == 0){
+			System.out.printf("ERROR: Pagesize of %d has to be more than tuplesize of %d\n",pageSize, tuplesize);
+			return false;
+		}
 		Attribute leftattr  = con.getLhs();
 		Attribute rightattr = (Attribute) con.getRhs();
 		leftindex           = left.getSchema().indexOf(leftattr);
 		rightindex          = right.getSchema().indexOf(rightattr);
+
+		System.out.print("BlockNested Join: ");
+		Debug.PPrint(con);
+		System.out.println();
 
 		leftpage = new Batch(batchsize * (numBuff-2));
 		rightpage = new Batch(batchsize);
@@ -60,174 +68,102 @@ public class BlockNested extends Join{
 		/** initialize the cursors of input buffers **/
 		lcurs = 0; 
 		rcurs = 0;
-		eosl  = false;
 
 		if (!left.open()) {
 			// error opening left
 		    return false;
 		} else {
-		    leftfilenum++;
-		    lfname = "BJtemp-Left-" + String.valueOf(leftfilenum);
-		    try{
-		    	// Loading B-2 pages of R into memory => num tuples = batchsize * (numBuff-2) 
-				ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(lfname));
-				for (int i = 0; i < batchsize * (numBuff-2)+1; i ++){
-					Tuple next = left.iteratorNext();
-					if (next != null){
-						leftpage.add(next);
-					} else {
-						// handle the case where R is completely loaded 
-						// ie. (R.iteratorNext() returns null), just pass
-						// what i have along
-						break;
-					}
-				}
-				out.writeObject(leftpage);
-				out.close();
-		    } catch (IOException io){
-				System.out.println("BlockNested:writing the temporary file error");
-				return false;
-		    }
+			// loading B-2 pages worth of Left data into buffer
+			for (int i = 0; i < batchsize * (numBuff-2); i ++){
+				next = left.iteratorNext();
+				if (next != null){
+					leftpage.add(next);
+				} else {
+					break;
+				}	
+			}
 		}
 
 		if (!right.open()) {
+			// error opening right
 		    return false;
 		} else {
-			rightfilenum++;
-		    rfname = "BJtemp-Right-" + String.valueOf(rightfilenum);
-		    try{
-		    	// loading 1 page of S into memory => num tuples = batchsize
-				ObjectOutputStream out1 = new ObjectOutputStream(new FileOutputStream(rfname));
-				for (int i = 0; i < batchsize; i ++){
-					Tuple next = right.iteratorNext();
-					if (next != null){
-						rightpage.add(next);
-					} else {
-						// handle the case where S is completely loaded 
-						// ie. (S.iteratorNext() returns null), just pass
-						// what i have along
-						break;
-					}
-				}
-				out1.writeObject(rightpage);
-				out1.close();
-		    } catch (IOException io){
-				System.out.println("BlockNested:writing the temporary file error");
-				return false;
-		    }
+			// loading 1 page worth of Left data into buffer
+			for (int i = 0; i < batchsize; i ++){
+				next = right.iteratorNext();
+				if (next != null){
+					rightpage.add(next);
+				} else {
+					break;
+				}	
+			}
 		}
 		return true;
     }
-
-    public Batch getBatch(String fname, int batchsize){
-    	Batch parsed_batch = new Batch(batchsize);
-		try {
-		    ObjectInputStream obj = new ObjectInputStream(new FileInputStream(fname));
-		    parsed_batch = (Batch)obj.readObject();
-		} catch(IOException io){
-		    System.err.println("BlockNested:error in reading the batch file " + fname);
-		    System.exit(1);
-		} catch (ClassNotFoundException c){
-		    System.out.println("BlockNested:Some error in deserialization file " + fname);
-		    System.exit(1);
-		} 
-		return parsed_batch;
-    }
-
 
     // The actual Iterator model for Join to get next tuple from join
     // but to not break the programme, iteratorNext() is wrapped by
     // next() which returns a page of tuples (which is not compliant to iterator model)
     public Tuple iteratorNext(){
-    	leftbatch = getBatch(lfname,batchsize*(numBuff-2));
-    	rightbatch = getBatch(rfname,batchsize);
-		while (true){
-			if (eosl == true){
-	    		break;
+    	while (true){
+	    	if (rcurs < rightpage.size()){
+	    		nextRight = rightpage.elementAt(rcurs++);
+	    	} else {
+	    		// get next set of 1 page worth of right 
+				rightpage = new Batch(batchsize);
+				next = right.iteratorNext();
+				// check first item of new batch, if no more
+				// then loop around
+				if (next == null){
+					right.close();
+					right.open();
+					lcurs++;
+					next = right.iteratorNext();
+				} 
+				rightpage.add(next);
+				
+				// loading B-2 pages worth of right data into buffer
+				for (int i = 1; i < batchsize ; i ++){
+					next = right.iteratorNext();
+					if (next != null){
+						rightpage.add(next);
+					} else {
+						break;
+					}	
+				}
+				//reset pointer
+				rcurs = 0;
+				nextRight = rightpage.elementAt(rcurs++);
 	    	}
-			// if S finish iterating current page
-			if (rcurs > (rightbatch.size()-1)){
-			    try{
-			    	rightpage = new Batch(batchsize);
-			    	// get next page of S
-					for (int i = 0; i < batchsize; i ++){
-						Tuple next = right.iteratorNext();
-						if (next != null){
-							rightpage.add(next);
-						} else {
-							right.close();
-							right.open();
-							lcurs++;
-							break;
-						}
-					}
-					// write new right page
-					ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(rfname));
-				    out.writeObject(rightpage);
-					out.close();					
-					rightbatch = getBatch(rfname,batchsize);
-					// reset right cursor
-					rcurs = 0;
-			    } catch (IOException io){
-					System.out.println("BlockNested:writing the temporary file error");
-					System.exit(1);
-			    }
-			} 
-			// loading next R tuple
-			if (lcurs > (leftbatch.size()-1)){
-				// case where finish the current B-2 batch of R
-			    try{
-					leftpage = new Batch(batchsize * (numBuff-2));
-					// loading next B-2 batch of R
-					for (int i = 0; i < batchsize * (numBuff-2) + 1; i ++){
-						Tuple next = left.iteratorNext();
-						if (next != null){
-							leftpage.add(next);
-						} else {
-							// if first item returns null then just break
-							// and return null, since no more tuples anyway
-							if (i == 0){
-								eosl = true;
-							}
-							break;
-						}
-					}
-					if (eosl == true){
-						return null;
-					} else {						
-						ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(lfname));
-						out.writeObject(leftpage);
-						out.close();
-						lcurs = 0;
-						leftbatch = getBatch(lfname, batchsize*(numBuff-2));
-					}
-			    } catch (IOException io){
-					System.out.println("BlockNested:writing the temporary file error");
-					System.exit(1);
-			    }
-			} 
-
-			// no more tuples left, just return
-			if (leftbatch.size() == 0){
-				return null;
-			}
-
-			if (rightpage.size() == 0){
-				continue;
-			}
-
-			Tuple nextLeft = leftbatch.elementAt(lcurs);
-			Tuple nextRight = rightbatch.elementAt(rcurs++);
-			if (last == null){
-				last = nextLeft;
-			}
-			// found matching tuple, return tuple
-			if (nextLeft.checkJoin(nextRight,leftindex,rightindex)){
+	    	if (lcurs < leftpage.size()){
+	    		nextLeft = leftpage.elementAt(lcurs);
+	    	} else {
+	    		// get next set of B-2 worth of left 
+				leftpage = new Batch(batchsize * (numBuff-2));
+				next = left.iteratorNext();
+				// check first item of new batch, if no more
+				// new item then just return null as job is completed
+				if (next == null){
+					return null;
+				} else {
+					leftpage.add(next);
+				}
+				// loading B-2 pages worth of Left data into buffer
+				for (int i = 1; i < batchsize * (numBuff-2); i ++){
+					next = left.iteratorNext();
+					if (next != null){
+						leftpage.add(next);
+					} else {
+						break;
+					}	
+				}
+				//reset pointer
+				lcurs = 0;
+	    	}
+	    	if (nextLeft.checkJoin(nextRight,leftindex,rightindex)){
 				return nextLeft.joinWith(nextRight);
 			} 
 		}
-		return null;
-
 	}
 
 	// the "wrong" next, not iterator model
@@ -244,22 +180,38 @@ public class BlockNested extends Join{
 			outbatch.add(nextTuple);
 		}
 		for (int i = 1; i < batchsize; i ++){
+			nextTuple = iteratorNext();
 			// add tuple if not null;
 			if (nextTuple != null){
-				nextTuple = iteratorNext();
+				outbatch.add(nextTuple);
+			} else {
+				break;
 			}
-			outbatch.add(nextTuple);
 		}
 		return outbatch;
     }
 
     /** Close the operator */
     public boolean close(){
-		File f = new File(lfname);
-		f.delete();
-		f = new File(rfname);
-		f.delete();
+    	left.close();
+    	right.close();
 		return true;
     }
+
+        public Batch getBatch(String fname, int batchsize){
+    	Batch parsed_batch = new Batch(batchsize);
+		try {
+		    ObjectInputStream obj = new ObjectInputStream(new FileInputStream(fname));
+		    parsed_batch = (Batch)obj.readObject();
+		} catch(IOException io){
+		    System.err.println("BlockNested:error in reading the batch file " + fname);
+		    System.exit(1);
+		} catch (ClassNotFoundException c){
+		    System.out.println("BlockNested:Some error in deserialization file " + fname);
+		    System.exit(1);
+		} 
+		return parsed_batch;
+    }
+
 
 }

@@ -8,17 +8,16 @@ import java.util.Vector;
 public class Select extends Operator{
 
     Operator base;  // base operator
-      Condition con; //select condition
+    Condition con; //select condition
 	int batchsize;  // number of tuples per outbatch
 
     /** The following fields are required during
      ** execution of the select operator
      **/
 
-    boolean eos;  // Indiacate whether end of stream is reached or not
     Batch inbatch;   // This is the current input buffer
     Batch outbatch;  // This is the current output buffer
-    int start;       // Cursor position in the input buffer
+    int start, i;       // Cursor position in the input buffer
 
 
 	/** constructor **/
@@ -51,18 +50,17 @@ public class Select extends Operator{
      **/
 
     public boolean open(){
-	eos=false;     // Since the stream is just opened
-	start = 0;   // set the cursor to starting position in input buffer
+		/** set number of tuples per page**/
+		int tuplesize = schema.getTupleSize();
+		batchsize=Batch.getPageSize()/tuplesize;
 
-	/** set number of tuples per page**/
-	int tuplesize=schema.getTupleSize();
-	batchsize=Batch.getPageSize()/tuplesize;
-
-
-	if(base.open())
-	    return true;
-	else
-	    return false;
+		if (base.open()) {
+			i = 0;
+			inbatch= base.next();
+		    return true;
+		} else {
+		    return false;
+		}
     }
 
 
@@ -70,60 +68,52 @@ public class Select extends Operator{
      ** condition specified on the tuples coming from base operator
      ** NOTE: This operation is performed on the fly
      **/
+    public Tuple iteratorNext(){
+		while (true){
+			if (inbatch != null && i == inbatch.size()){
+	    		inbatch = base.next();
+	    		i = 0;
+	    	}
+	    	// if batch is null means done, return null
+	    	if(inbatch == null || inbatch.size() == 0){
+			    return null;
+			}
+			// select tuple
+			if (i < inbatch.size()){
+				Tuple present = inbatch.elementAt(i++);
+				if (checkCondition(present)) {
+					return present;
+				}
+			}
+		}		
+    }
 
+    // the "wrong" next, not iterator model
+	// however to not break the system, we just
+	// use this and call iteratorNext() to get next tuple
+	// to fill up page to return;
     public Batch next(){
-	//System.out.println("Select:-----------------in next--------------");
-
-	int i=0;
-
-	if(eos){
-		close();
-	    return null;
-	}
-
-        /** An output buffer is initiated**/
-	outbatch = new Batch(batchsize);
-
-	/** keep on checking the incoming pages until
-	 ** the output buffer is full
-	 **/
-	while(!outbatch.isFull()){
-	    if(start==0){
-		inbatch= base.next();
-		/** There is no more incoming pages from base operator **/
-		if(inbatch==null){
-
-		    eos = true;
-		    return outbatch;
+		outbatch = new Batch(batchsize);
+		// if first tuple is null, then no need to iteratre
+		// just return null straight
+		Tuple nextTuple = iteratorNext();
+		if (nextTuple == null){
+			return null;
 		}
-	    }
-
-	    /** Continue this for loop until this page is fully observed
-	     ** or the output buffer is full
-	     **/
-
-	    for(i=start;i<inbatch.size() && (!outbatch.isFull());i++){
-		Tuple present = inbatch.elementAt(i);
-		/** If the condition is satisfied then
-		 ** this tuple is added tot he output buffer
-		 **/
-		if(checkCondition(present))
-		//if(present.checkCondn(con))
-		    outbatch.add(present);
-	    }
-
-	/** Modify the cursor to the position requierd
-	 ** when the base operator is called next time;
-	 **/
-
-	    if(i==inbatch.size())
-		start=0;
-	    else
-		start = i;
-
-	    //  return outbatch;
-	}
-	return outbatch;
+		outbatch.add(nextTuple);
+		// fill up tuples for batch and return
+		for(int n=1;n<batchsize;n++){ 
+		    nextTuple = iteratorNext();
+		    // add only if not null and
+		    // if encounter null means finished all,
+		    // just return what we have
+		    if (nextTuple != null){
+		    	outbatch.add(nextTuple);
+			} else {
+				break;
+			}
+		}
+		return outbatch;
     }
 
 
