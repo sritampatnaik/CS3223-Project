@@ -378,7 +378,10 @@ public class GreedyOptimizer {
 
 			    case JoinType.SORTMERGE:
 
-					NestedJoin sm = new NestedJoin((Join) node);
+					SortMerge sm = new SortMerge((Join) node);
+					sm.setLeft(left);
+					sm.setRight(right);
+					sm.setNumBuff(numbuff);
 		                /* + other code */
 					return sm;
 

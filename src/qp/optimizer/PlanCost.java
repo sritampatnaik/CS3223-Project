@@ -149,7 +149,7 @@ public class PlanCost{
 	    joincost = leftpages+(int)Math.ceil(leftpages/Batch.getPageSize())*rightpages;
 	    break;
 	case JoinType.SORTMERGE:
-	    joincost = 0;
+	    joincost = (2*leftpages*2) + (2*rightpages*2) + (leftpages + rightpages);
 	    break;
 	case JoinType.HASHJOIN:
 	    joincost = 0;
