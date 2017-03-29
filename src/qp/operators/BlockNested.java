@@ -54,6 +54,10 @@ public class BlockNested extends Join{
 		leftindex           = left.getSchema().indexOf(leftattr);
 		rightindex          = right.getSchema().indexOf(rightattr);
 
+		System.out.print("BlockNested Join: ");
+		Debug.PPrint(con);
+		System.out.println();
+
 		leftpage = new Batch(batchsize * (numBuff-2));
 		rightpage = new Batch(batchsize);
  

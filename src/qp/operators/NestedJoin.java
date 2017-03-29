@@ -55,6 +55,10 @@ public class NestedJoin extends Join{
 		
 		Batch rightpage;
 
+		System.out.print("Nested Join: ");
+		Debug.PPrint(con);
+		System.out.println();
+
 		// load first S tuple
 		if(!right.open()){
 		    return false;
@@ -126,7 +130,7 @@ public class NestedJoin extends Join{
 		}
 		return outbatch;
     }
-    
+
     /** Close the operator */
     public boolean close(){
 		left.close();
