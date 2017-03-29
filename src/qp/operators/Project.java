@@ -94,10 +94,19 @@ public class Project extends Operator{
 		}
     	// project tuple	
 		Tuple basetuple = inbatch.elementAt(i++);
+		// next finish iteration, batch is empty
+		if (basetuple == null){
+			return null;
+		}
 		Vector present = new Vector();
 		for(int j=0;j<attrSet.size();j++){
-			Object data = basetuple.dataAt(attrIndex[j]);
-			present.add(data);
+			try {
+				Object data = basetuple.dataAt(attrIndex[j]);
+				present.add(data);
+			} catch(Exception e) {
+				System.out.println(e);
+				System.out.printf("i: %d, inbatchsize: %d,j:%d ,attrSet: %d,", i,inbatch.size(),j,attrSet.size());
+			}
 	    }
 	    return new Tuple(present);
     }

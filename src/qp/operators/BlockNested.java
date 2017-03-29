@@ -176,17 +176,21 @@ public class BlockNested extends Join{
 			outbatch.add(nextTuple);
 		}
 		for (int i = 1; i < batchsize; i ++){
+			nextTuple = iteratorNext();
 			// add tuple if not null;
 			if (nextTuple != null){
-				nextTuple = iteratorNext();
+				outbatch.add(nextTuple);
+			} else {
+				break;
 			}
-			outbatch.add(nextTuple);
 		}
 		return outbatch;
     }
 
     /** Close the operator */
     public boolean close(){
+    	left.close();
+    	right.close();
 		return true;
     }
 
