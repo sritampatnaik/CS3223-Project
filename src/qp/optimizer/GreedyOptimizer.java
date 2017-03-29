@@ -361,7 +361,7 @@ public class GreedyOptimizer {
 		    switch(joinType){
 			    case JoinType.NESTEDJOIN:
 
-					SortMerge nj = new SortMerge((Join) node);
+					NestedJoin nj = new NestedJoin((Join) node);
 					nj.setLeft(left);
 					nj.setRight(right);
 					nj.setNumBuff(numbuff);
@@ -369,7 +369,7 @@ public class GreedyOptimizer {
 
 			    case JoinType.BLOCKNESTED:
 
-					SortMerge bj = new SortMerge((Join) node);
+					BlockNested bj = new BlockNested((Join) node);
 					bj.setLeft(left);
 					bj.setRight(right);
 					bj.setNumBuff(numbuff);
@@ -378,7 +378,10 @@ public class GreedyOptimizer {
 
 			    case JoinType.SORTMERGE:
 
-					NestedJoin sm = new NestedJoin((Join) node);
+					SortMerge sm = new SortMerge((Join) node);
+					sm.setLeft(left);
+					sm.setRight(right);
+					sm.setNumBuff(numbuff);
 		                /* + other code */
 					return sm;
 
