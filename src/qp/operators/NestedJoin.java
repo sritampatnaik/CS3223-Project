@@ -25,12 +25,10 @@ public class NestedJoin extends Join{
     Batch outbatch;   // Output buffer
     Batch leftbatch;  // Buffer for left input stream
     Batch rightbatch;  // Buffer for right input stream
-    ObjectInputStream in; // File pointer to the right hand materialized file
 
     int lcurs;    // Cursor for left side buffer
     int rcurs;    // Cursor for right side buffer
-    boolean eosl;  // Whether end of stream (left table) is reached
-    boolean eosr;  // End of stream (right table)
+
     Tuple nextLeft;
 	Tuple nextRight; 
 
@@ -59,7 +57,7 @@ public class NestedJoin extends Join{
 		leftindex = left.getSchema().indexOf(leftattr);
 		rightindex = right.getSchema().indexOf(rightattr);
 		
-		Batch rightpage;
+		outbatch = new Batch(batchsize);
 
 		System.out.print("Nested Join: ");
 		Debug.PPrint(con);
@@ -119,7 +117,7 @@ public class NestedJoin extends Join{
 	// use this and call iteratorNext() to get next tuple
 	// to fill up page to return;
 	public Batch next(){
-		Batch outbatch = new Batch(batchsize);
+		outbatch.clear();
 		Tuple nextTuple = iteratorNext();
 		// check if there is no tuple at all just return null;
 		if (nextTuple == null){

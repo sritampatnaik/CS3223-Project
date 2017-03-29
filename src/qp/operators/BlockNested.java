@@ -12,25 +12,14 @@ public class BlockNested extends Join{
     int batchsize;        // Number of tuples per out batch
     int leftindex;        // Index of the join attribute in left table
     int rightindex;       // Index of the join attribute in right table
-    String lfname;        // The file name where the left table is materialize
-    String rfname;        // The file name where the right table is materialize
-
-    static int leftfilenum  = 0; // To get unique filenum for this operation
-    static int rightfilenum = 0;
 
     Batch outbatch;       // Output buffer
-    Batch leftbatch;      // Buffer for left input stream
-    Batch rightbatch;     // Buffer for right input stream
     Batch leftpage;
     Batch rightpage;
-    ObjectInputStream r; // File pointer to the right hand materialized file
-    ObjectInputStream s; // File pointer to the right hand materialized file
 
     int lcurs;            // Cursor for left side buffer
     int rcurs;            // Cursor for right side buffer
-    boolean eosl;         // Whether end of stream (left table) is reached
     Tuple next,nextLeft,nextRight;
-    Tuple last = null;
     
     public BlockNested(Join jn){
 		super(jn.getLeft(), jn.getRight(), jn.getCondition(), jn.getOpType());
@@ -64,6 +53,7 @@ public class BlockNested extends Join{
 
 		leftpage = new Batch(batchsize * (numBuff-2));
 		rightpage = new Batch(batchsize);
+		outbatch = new Batch(batchsize);
  
 		/** initialize the cursors of input buffers **/
 		lcurs = 0; 
@@ -110,7 +100,7 @@ public class BlockNested extends Join{
 	    		nextRight = rightpage.elementAt(rcurs++);
 	    	} else {
 	    		// get next set of 1 page worth of right 
-				rightpage = new Batch(batchsize);
+				rightpage.clear();
 				next = right.iteratorNext();
 				// check first item of new batch, if no more
 				// then loop around
@@ -139,7 +129,7 @@ public class BlockNested extends Join{
 	    		nextLeft = leftpage.elementAt(lcurs);
 	    	} else {
 	    		// get next set of B-2 worth of left 
-				leftpage = new Batch(batchsize * (numBuff-2));
+				leftpage.clear();
 				next = left.iteratorNext();
 				// check first item of new batch, if no more
 				// new item then just return null as job is completed
@@ -171,7 +161,7 @@ public class BlockNested extends Join{
 	// use this and call iteratorNext() to get next tuple
 	// to fill up page to return;
     public Batch next(){
-		Batch outbatch = new Batch(batchsize);
+		outbatch.clear();
 		Tuple nextTuple = iteratorNext();
 		// check if there is no tuple at all just return null;
 		if (nextTuple == null){
@@ -197,21 +187,5 @@ public class BlockNested extends Join{
     	right.close();
 		return true;
     }
-
-        public Batch getBatch(String fname, int batchsize){
-    	Batch parsed_batch = new Batch(batchsize);
-		try {
-		    ObjectInputStream obj = new ObjectInputStream(new FileInputStream(fname));
-		    parsed_batch = (Batch)obj.readObject();
-		} catch(IOException io){
-		    System.err.println("BlockNested:error in reading the batch file " + fname);
-		    System.exit(1);
-		} catch (ClassNotFoundException c){
-		    System.out.println("BlockNested:Some error in deserialization file " + fname);
-		    System.exit(1);
-		} 
-		return parsed_batch;
-    }
-
 
 }
