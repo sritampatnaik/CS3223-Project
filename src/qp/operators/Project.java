@@ -56,7 +56,6 @@ public class Project extends Operator{
 		int tuplesize = schema.getTupleSize();
 		batchsize=Batch.getPageSize()/tuplesize;
 
-
 		/** The followingl loop findouts the index of the columns that
 		 ** are required from the base operator
 		 **/
