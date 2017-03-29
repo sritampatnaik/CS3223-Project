@@ -48,6 +48,11 @@ public class NestedJoin extends Join{
 		int tuplesize=schema.getTupleSize();
 		batchsize = Batch.getPageSize()/tuplesize;
 
+		if (batchsize == 0){
+			System.out.printf("ERROR: Pagesize of %d has to be more than tuplesize of %d\n",pageSize, tuplesize);
+			return false;
+		}
+
 		Attribute leftattr = con.getLhs();
 		Attribute rightattr =(Attribute) con.getRhs();
 		leftindex = left.getSchema().indexOf(leftattr);
