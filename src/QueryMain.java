@@ -129,10 +129,12 @@ public class QueryMain{
 	///** preparing the execution plan **/
 	//Operator root = RandomOptimizer.makeExecPlan(logicalroot);
 
-	// swap out random optimiser for greedy optimiser
+	// swap out roptimizers
 	// GreedyOptimizer go = new GreedyOptimizer(sqlquery);
 	// Operator logicalroot = go.getOptimizedPlan();
-	RandomOptimizer ro = new RandomOptimizer(sqlquery);
+	// RandomOptimizer ro = new RandomOptimizer(sqlquery);
+	// Operator logicalroot = ro.getOptimizedPlan();
+	SARandomOptimizer ro = new SARandomOptimizer(sqlquery);
 	Operator logicalroot = ro.getOptimizedPlan();
 
 	if(logicalroot==null){
@@ -141,7 +143,8 @@ public class QueryMain{
 	}
 	/** preparing the execution plan **/
 	// Operator root = GreedyOptimizer.makeExecPlan(logicalroot);
-	Operator root = RandomOptimizer.makeExecPlan(logicalroot);
+	// Operator root = RandomOptimizer.makeExecPlan(logicalroot);
+	Operator root = SARandomOptimizer.makeExecPlan(logicalroot);
 
 /** Print final Plan **/
 	System.out.println("----------------------Execution Plan----------------");

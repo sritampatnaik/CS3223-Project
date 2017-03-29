@@ -1,4 +1,4 @@
-/** performs randomized optimization, iterative improvement algorithm **/
+/** performs randomized optimization, simulated annealing algorithm **/
 
 
 package qp.optimizer;
@@ -9,14 +9,13 @@ import java.lang.Math;
 import java.util.Vector;
 import java.util.Random;
 
-public class RandomOptimizer{
+public class SARandomOptimizer{
 
 	/** enumeration of different ways to find the neighbor plan **/
     public static final int  METHODCHOICE =0;  //selecting neighbor by changing a method for an operator
     public static final int COMMUTATIVE =1;   // by rearranging the operators by commutative rule
     public static final int ASSOCIATIVE =2;  // rearranging the operators by associative rule
     public static final int DEFAULTT = 10000;
-    public static final double COOLINGRATE = 0.003;
     /** Number of altenative methods available for a node as specified above**/
     public static final int NUMCHOICES = 3;
 
@@ -24,7 +23,7 @@ public class RandomOptimizer{
     int numJoin;          // Number of joins in this query plan
 
 	/** constructor **/
-    public RandomOptimizer(SQLQuery sqlquery){
+    public SARandomOptimizer(SQLQuery sqlquery){
 		this.sqlquery = sqlquery;
     }
 
@@ -51,10 +50,6 @@ public class RandomOptimizer{
 		return neighbor;
     }
 
-    public double reduceT(double T){
-    	return T * 1 - (COOLINGRATE);
-    }
-
 
     /** implementation of Iterative Improvement Algorithm
      ** for Randomized optimization of Query Plan
@@ -62,112 +57,106 @@ public class RandomOptimizer{
 
     public Operator getOptimizedPlan(){
 
-		/** get an initial plan for the given sql query **/
-		Random rand = new Random();
-		RandomInitialPlan rip = new RandomInitialPlan(sqlquery);
-		 numJoin = rip.getNumJoins();
+	/** get an initial plan for the given sql query **/
 
-		int MINCOST = Integer.MAX_VALUE;
-		Operator finalPlan = null;
+	RandomInitialPlan rip = new RandomInitialPlan(sqlquery);
+	 numJoin = rip.getNumJoins();
 
-		double t = DEFAULTT;
+	int MINCOST = Integer.MAX_VALUE;
+	Operator finalPlan = null;
 
-		/** NUMTER is number of times random restart **/
 
-		int NUMITER ;
-		    if(numJoin!=0){
-		      NUMITER = 2 *numJoin;
-		    }else{
-			NUMITER=1;
-		    }
+	/** NUMTER is number of times the inner loop in simulated annealing should run **/
 
-		/** Randomly restart the gradient descent until
-		 ** the maximum specified number of random restarts (NUMITER)
-		 ** has satisfied
-		 **/
+	int NUMITER ;
+    if(numJoin!=0){
+    	NUMITER = 16 * numJoin;
+    }else{
+		NUMITER=1;
+    }
 
-		for(int j=0;j<NUMITER;j++){
-		    Operator initPlan = rip.prepareInitialPlan();
+	Operator initPlan = rip.prepareInitialPlan();
+	modifySchema(initPlan);
+	System.out.println("-----------initial Plan-------------");
+	Debug.PPrint(initPlan);
+	PlanCost pc = new PlanCost();
+	int initCost = pc.getCost(initPlan);
+	System.out.println(initCost);
 
-		    modifySchema(initPlan);
-		    System.out.println("-----------initial Plan-------------");
-		    Debug.PPrint(initPlan);
-		    PlanCost pc = new PlanCost();
-		    int initCost = pc.getCost(initPlan);
-		    System.out.println(initCost);
+	//Setting the initial temparature (T) for annealing where
+	int temparature = 2 * initCost;
 
-		    boolean flag = true;
-		    int minNeighborCost=initCost; //just initialization purpose;
-		    Operator minNeighbor=initPlan; //just initialization purpose;
-		    if(numJoin !=0){
-				while(flag){   // flag = false when local minimum is reached
-		 			System.out.println("---------------while--------");
-				    Operator initPlanCopy = (Operator) initPlan.clone();
-				    minNeighbor = getNeighbor(initPlanCopy);
+	int minNeighborCost=initCost; //just initialization purpose;
+	Operator minNeighbor=initPlan; //just initialization purpose;
 
-				    System.out.println("--------------------------neighbor---------------");
-				    Debug.PPrint(minNeighbor);
-				    pc = new PlanCost();
-				    minNeighborCost = pc.getCost(minNeighbor);
-				    System.out.println("  "+minNeighborCost);
+	int minUnchanged = 0;
 
-				    /** In this loop we consider from the
-				     ** possible neighbors (randomly selected)
-				     ** and take the minimum among for next step
-				     **/
+	// Loop through while not frozen
+	while (temparature >= 1 && minUnchanged < 4){
+	    if(numJoin !=0){
+			for(int j=0;j<NUMITER;j++) {  // equillibrium
+	 			System.out.println("---------------while--------");
+			    Operator initPlanCopy = (Operator) initPlan.clone();
+			    minNeighbor = getNeighbor(initPlanCopy);
 
-				    for(int i=1;i<2*numJoin;i++){
-						initPlanCopy= (Operator) initPlan.clone();
-						Operator neighbor = getNeighbor(initPlanCopy);
-						System.out.println("------------------neighbor--------------");
-						Debug.PPrint(neighbor);
-						pc=new PlanCost();
-						int neighborCost = pc.getCost(neighbor);
-						System.out.println(neighborCost);
+			    System.out.println("--------------------------neighbor---------------");
+			    Debug.PPrint(minNeighbor);
+			    pc = new PlanCost();
+			    minNeighborCost = pc.getCost(minNeighbor);
+			    System.out.println("  "+minNeighborCost);
 
-						if(neighborCost<minNeighborCost){
-						    minNeighbor = neighbor;
-						    minNeighborCost = neighborCost;
-						} else {
-							int diff = neighborCost - minNeighborCost;
-							double probability = Math.exp(-diff/t);
-							System.out.printf("prob: %f\n", probability);
-							if (rand.nextDouble() < probability){
-								System.out.println("MAGICCCCCC");
-								minNeighbor = neighbor;
-						    	minNeighborCost = neighborCost;
-							}
-						}
-						// System.out.println("-----------------for-------------");
+			    for(int i=1; i < 2 * numJoin;i++){
+					initPlanCopy= (Operator) initPlan.clone();
+					Operator neighbor = getNeighbor(initPlanCopy);
+					System.out.println("------------------neighbor--------------");
+					Debug.PPrint(neighbor);
+					pc=new PlanCost();
+					int neighborCost = pc.getCost(neighbor);
+					System.out.println(neighborCost);
+
+
+					if(neighborCost<minNeighborCost){
+					    minNeighbor = neighbor;
+					    minNeighborCost = neighborCost;
 					}
-				    if(minNeighborCost<initCost){
+					// System.out.println("-----------------for-------------");
+			    }
+
+			    int costDiff = minNeighborCost - initCost;
+			    if (costDiff <= 0){
+			    	initPlan = minNeighbor;
+					initCost = minNeighborCost;
+			    } else if (costDiff > 0){
+			    	if( Math.random() <= Math.exp( -costDiff / temparature)) {
 						initPlan = minNeighbor;
 						initCost = minNeighborCost;
-					    }else{
-						minNeighbor = initPlan;
-						minNeighborCost = initCost;
+					}
+			    }
 
-						flag = false;   // local minimum reached
-				    }
-			     t = reduceT(t);
-				}
-				System.out.println("------------------local minimum--------------");
-				Debug.PPrint(minNeighbor);
-				System.out.println(" "+minNeighborCost);
+			    if (initCost < minNeighborCost) {
+			    	minNeighbor = initPlan;
+					minNeighborCost = initCost;
+			    }	 
+			}
 
-		    }
-		    if(minNeighborCost<MINCOST){
+
+			System.out.println("------------------After Staging (Once equillibrium has reached)--------------");
+			Debug.PPrint(minNeighbor);
+			System.out.println(" "+minNeighborCost);
+	    }
+	    temparature *= 0.95;
+	    if(minNeighborCost < MINCOST){
 			MINCOST = minNeighborCost;
 			finalPlan = minNeighbor;
-
-		    }
-		}
-		System.out.println("\n\n\n");
-		System.out.println("---------------------------Final Plan----------------");
-		Debug.PPrint(finalPlan);
-		System.out.println("  "+MINCOST);
-		return finalPlan;
+	    }
+	}
+	System.out.println("\n\n\n");
+	System.out.println("---------------------------Plan After FROZEN----------------");
+	Debug.PPrint(finalPlan);
+	System.out.println("  "+MINCOST);
+	return finalPlan;
     }
+
 
 
     /** Selects a random method choice for join wiht number joinNum
