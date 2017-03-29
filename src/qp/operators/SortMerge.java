@@ -169,13 +169,13 @@ public class SortMerge extends Join{
         int leftbatchsize = leftbatch.size();
         int rightbatchsize = rightbatch.size();
 
-        Tuple nextLeft = leftbatch.elementAt(lcurs);
-        Tuple nextRight = rightbatch.elementAt(rcurs);
+        Tuple nextLeft = null;
+        Tuple nextRight = null;
 
         Tuple output = null;
-        boolean toSendOutput = false;
+        boolean toReturnOutput = false;
 
-        while (!eosl || !eosr ){
+        while (!eosl && !eosr ) {
 
             if (lcurs < leftbatchsize) {
                 nextLeft = leftbatch.elementAt(lcurs);
@@ -185,24 +185,22 @@ public class SortMerge extends Join{
                 nextRight = rightbatch.elementAt(rcurs);
             }
 
-            int leftIndex = (Integer) nextLeft.dataAt(leftindex);
-            int rightIndex = (Integer) nextRight.dataAt(rightindex);
+            int leftIndexValue = (Integer) nextLeft.dataAt(leftindex);
+            int rightIndexValue = (Integer) nextRight.dataAt(rightindex);
 
-//            Debug.PPrint(nextLeft);
-//            Debug.PPrint(nextRight);
 
-            if (leftIndex == rightIndex) {
+            if (leftIndexValue == rightIndexValue) {
                 output = nextLeft.joinWith(nextRight);
-                toSendOutput = true;
+                toReturnOutput = true;
             }
 
-            if (leftIndex < rightIndex) {
-                if (lcurs < leftbatchsize) {
+            if (leftIndexValue < rightIndexValue) {
+                if (lcurs < leftbatchsize-1) {
                     lcurs++;
                 }
                 System.out.println("lcurs" + lcurs);
             } else {
-                if (rcurs < rightbatchsize) {
+                if (rcurs < rightbatchsize-1) {
                     rcurs++;
                 }
                 System.out.println("rcurs" + rcurs);
@@ -215,19 +213,16 @@ public class SortMerge extends Join{
                 eosr = true;
             }
 
-            if(toSendOutput) {
-                toSendOutput = false;
+            if(toReturnOutput){
+                toReturnOutput = false;
                 return output;
             }
+
         }
 
         return null;
     }
 
-    // the "wrong" next, not iterator model
-    // however to not break the system, we just
-    // use this and call iteratorNext() to get next tuple
-    // to fill up page to return;
     public Batch next(){
         Batch outbatch = new Batch(batchsize);
         Tuple nextTuple = iteratorNext();
@@ -238,12 +233,13 @@ public class SortMerge extends Join{
             outbatch.add(nextTuple);
         }
         for (int i = 1; i < batchsize; i ++){
+            nextTuple = iteratorNext();
             // add tuple if not null;
             if (nextTuple != null){
-                nextTuple = iteratorNext();
-                Debug.PPrint(nextTuple);
+                outbatch.add(nextTuple);
+            } else {
+                break;
             }
-            outbatch.add(nextTuple);
         }
         return outbatch;
     }
