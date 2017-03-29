@@ -175,8 +175,7 @@ public class SortMerge extends Join{
         Tuple output = null;
         boolean toReturnOutput = false;
 
-        while (!eosl && !eosr ) {
-
+        while (!eosl || !eosr ) {
             if (lcurs < leftbatchsize) {
                 nextLeft = leftbatch.elementAt(lcurs);
             }
@@ -194,16 +193,16 @@ public class SortMerge extends Join{
                 toReturnOutput = true;
             }
 
-            if (leftIndexValue < rightIndexValue) {
-                if (lcurs < leftbatchsize-1) {
+            if(!eosl && !eosr){
+                if (leftIndexValue < rightIndexValue) {
                     lcurs++;
-                }
-                System.out.println("lcurs" + lcurs);
-            } else {
-                if (rcurs < rightbatchsize-1) {
+                } else {
                     rcurs++;
                 }
-                System.out.println("rcurs" + rcurs);
+            } else if(eosl && !eosr){
+                rcurs++;
+            } else if(!eosl && eosr){
+                lcurs++;
             }
 
             if (lcurs == leftbatchsize - 1){
