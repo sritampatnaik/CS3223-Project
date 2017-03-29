@@ -129,30 +129,13 @@ public class GreedyOptimizer {
 		int jnnum = RandNumb.randInt(0,numJoin-1);
 		Join jn=null;
 		/** Repeat until all the join conditions are considered **/
-		while(bitCList.cardinality() < numJoin-1){
+		while(bitCList.cardinality() != numJoin){
 		    /** If this condition is already considered chose
 		     ** another join condition
 		     **/
-		    int bestI = 0;
-		    int lowestCost = Integer.MAX_VALUE;
-
-		    for (int i = 0; i < numJoin; i++){
-		    	if (bitCList.get(jnnum)){
-		    		continue;
-		    	}
-		    	Condition cn = (Condition) joinlist.elementAt(jnnum);
-		    	String lefttab = cn.getLhs().getTabName();
-		    	String righttab = ((Attribute) cn.getRhs()).getTabName();
-			    Operator left = (Operator) tab_op_hash.get(lefttab);
-			    Operator right = (Operator) tab_op_hash.get(righttab);
-			    int currcost = left.getOperatorSize() * right.getOperatorSize(); // given lack of info assume worst case and cross product
-			    if (lowestCost > currcost) {
-			    	bestI = i;
-			    }
+		    while(bitCList.get(jnnum)){
+				jnnum = RandNumb.randInt(0,numJoin-1);
 		    }
-
-			jnnum = bestI;
-		    
 		   
 		    Condition cn = (Condition) joinlist.elementAt(jnnum);
 		    String lefttab = cn.getLhs().getTabName();
@@ -174,9 +157,9 @@ public class GreedyOptimizer {
 		    modifyHashtable(left,jn);
 		    modifyHashtable(right,jn);
 
-		    // Debug.PPrint(left);
+		    Debug.PPrint(left);
 
-		    // System.out.println(left.getOperatorSize());
+		    System.out.println(left.getOperatorSize());
 
 		    //tab_op_hash.put(lefttab,jn);
 		    //tab_op_hash.put(righttab,jn);
@@ -378,10 +361,7 @@ public class GreedyOptimizer {
 
 			    case JoinType.SORTMERGE:
 
-					SortMerge sm = new SortMerge((Join) node);
-					sm.setLeft(left);
-					sm.setRight(right);
-					sm.setNumBuff(numbuff);
+					NestedJoin sm = new NestedJoin((Join) node);
 		                /* + other code */
 					return sm;
 
