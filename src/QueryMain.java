@@ -140,9 +140,8 @@ public class QueryMain{
 	    System.exit(1);
 	}
 	/** preparing the execution plan **/
-	Operator root = GreedyOptimizer.makeExecPlan(logicalroot);
-
-
+//	Operator root = GreedyOptimizer.makeExecPlan(logicalroot);
+	Operator root = RandomOptimizer.makeExecPlan(logicalroot);
 
 /** Print final Plan **/
 	System.out.println("----------------------Execution Plan----------------");

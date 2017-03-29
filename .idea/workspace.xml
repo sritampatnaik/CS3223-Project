@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="c420dd37-7d36-4b88-8738-de2ada870927" name="Default" comment="">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/qp/operators/NestedJoin.java" afterPath="$PROJECT_DIR$/src/qp/operators/NestedJoin.java" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/QueryMain.java" afterPath="$PROJECT_DIR$/src/QueryMain.java" />
     </list>
     <ignored path="CS3223-Project.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -31,17 +31,17 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="QueryMain.java" pinned="false" current-in-tab="false">
+      <file leaf-file-name="QueryMain.java" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/QueryMain.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="1230">
-              <caret line="87" column="15" selection-start-line="77" selection-start-column="8" selection-end-line="77" selection-end-column="15" />
+            <state relative-caret-position="382">
+              <caret line="142" column="32" selection-start-line="142" selection-start-column="0" selection-end-line="143" selection-end-column="0" />
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="NestedJoin.java" pinned="false" current-in-tab="true">
+      <file leaf-file-name="NestedJoin.java" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/qp/operators/NestedJoin.java">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="300">
@@ -64,7 +64,7 @@
       <file leaf-file-name="Schema.java" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/qp/utils/Schema.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="405">
+            <state relative-caret-position="420">
               <caret line="37" column="4" selection-start-line="37" selection-start-column="4" selection-end-line="37" selection-end-column="4" />
               <folding>
                 <element signature="e#663#664#0" expanded="true" />
@@ -97,7 +97,7 @@
       <file leaf-file-name="Tuple.java" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/qp/utils/Tuple.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="360">
+            <state relative-caret-position="420">
               <caret line="33" column="28" selection-start-line="33" selection-start-column="19" selection-end-line="33" selection-end-column="28" />
               <folding>
                 <element signature="n#!!doc" expanded="true" />
@@ -133,7 +133,6 @@
       <list>
         <option value="$PROJECT_DIR$/src/qp/operators/Select.java" />
         <option value="$PROJECT_DIR$/testcases/query6" />
-        <option value="$PROJECT_DIR$/src/QueryMain.java" />
         <option value="$PROJECT_DIR$/testcases/query3" />
         <option value="$PROJECT_DIR$/src/qp/optimizer/PlanCost.java" />
         <option value="$PROJECT_DIR$/src/qp/utils/Attribute.java" />
@@ -144,6 +143,7 @@
         <option value="$PROJECT_DIR$/src/qp/operators/HashJoin.java" />
         <option value="$PROJECT_DIR$/src/qp/operators/Operator.java" />
         <option value="$PROJECT_DIR$/src/qp/operators/NestedJoin.java" />
+        <option value="$PROJECT_DIR$/src/QueryMain.java" />
       </list>
     </option>
   </component>
@@ -669,11 +669,12 @@
       <workItem from="1490455227354" duration="767000" />
       <workItem from="1490507557058" duration="36070000" />
       <workItem from="1490788323269" duration="38000" />
+      <workItem from="1490791248621" duration="32000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="51246000" />
+    <option name="totallyTimeSpent" value="51278000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="292" y="1080" width="1280" height="800" extended-state="0" />
@@ -856,7 +857,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="37">
           <caret line="142" column="0" selection-start-line="142" selection-start-column="0" selection-end-line="142" selection-end-column="0" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -985,13 +985,12 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
           <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/qp/utils/Schema.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="405">
+        <state relative-caret-position="420">
           <caret line="37" column="4" selection-start-line="37" selection-start-column="4" selection-end-line="37" selection-end-column="4" />
           <folding>
             <element signature="e#663#664#0" expanded="true" />
@@ -1011,21 +1010,13 @@
     <entry file="file://$PROJECT_DIR$/testcases/qq" />
     <entry file="file://$PROJECT_DIR$/src/qp/utils/Tuple.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="360">
+        <state relative-caret-position="420">
           <caret line="33" column="28" selection-start-line="33" selection-start-column="19" selection-end-line="33" selection-end-column="28" />
           <folding>
             <element signature="n#!!doc" expanded="true" />
             <element signature="e#425#426#0" expanded="true" />
             <element signature="e#463#464#0" expanded="true" />
           </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/QueryMain.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1230">
-          <caret line="87" column="15" selection-start-line="77" selection-start-column="8" selection-end-line="77" selection-end-column="15" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -1067,6 +1058,14 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="300">
           <caret line="49" column="29" selection-start-line="49" selection-start-column="29" selection-end-line="49" selection-end-column="29" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/QueryMain.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="382">
+          <caret line="142" column="32" selection-start-line="142" selection-start-column="0" selection-end-line="143" selection-end-column="0" />
           <folding />
         </state>
       </provider>
