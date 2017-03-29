@@ -49,6 +49,10 @@ public class BlockNested extends Join{
 		int pageSize        = Batch.getPageSize();
 
 		batchsize           = pageSize/tuplesize;
+		if (batchsize == 0){
+			System.out.printf("ERROR: Pagesize of %d has to be more than tuplesize of %d\n",pageSize, tuplesize);
+			return false;
+		}
 		Attribute leftattr  = con.getLhs();
 		Attribute rightattr = (Attribute) con.getRhs();
 		leftindex           = left.getSchema().indexOf(leftattr);
