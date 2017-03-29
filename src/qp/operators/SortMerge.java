@@ -69,7 +69,7 @@ public class SortMerge extends Join{
             return false;
         } else {
             leftfilenum++;
-            lfname = "BJtemp-Left-" + String.valueOf(leftfilenum);
+            lfname = "SMTEemp-Left-" + String.valueOf(leftfilenum);
             try{
                 ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(lfname));
                 ArrayList<Tuple> Rlist = new ArrayList<Tuple>();
@@ -106,7 +106,7 @@ public class SortMerge extends Join{
             return false;
         } else {
             rightfilenum++;
-            rfname = "BJtemp-Right-" + String.valueOf(rightfilenum);
+            rfname = "SMTEemp-Right-" + String.valueOf(rightfilenum);
             try{
                 ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(rfname));
                 ArrayList<Tuple> Slist = new ArrayList<Tuple>();
