@@ -90,7 +90,7 @@ public class RandomOptimizer{
 		    Operator initPlan = rip.prepareInitialPlan();
 
 		    modifySchema(initPlan);
-		    System.out.println("-----------initial Plan-------------");
+		    // System.out.println("-----------initial Plan-------------");
 		    Debug.PPrint(initPlan);
 		    PlanCost pc = new PlanCost();
 		    int initCost = pc.getCost(initPlan);
