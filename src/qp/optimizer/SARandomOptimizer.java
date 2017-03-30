@@ -142,7 +142,9 @@ public class SARandomOptimizer{
 			    if (initCost < minNeighborCost) {
 			    	minNeighbor = initPlan;
 					minNeighborCost = initCost;
-			    }	 
+			    } else {
+			    	minUnchanged++;
+			    }
 			}
 
 
