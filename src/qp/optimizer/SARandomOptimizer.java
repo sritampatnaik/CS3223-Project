@@ -1,4 +1,8 @@
-/** performs randomized optimization, simulated annealing algorithm **/
+/** performs randomized optimization, 
+	simulated annealing algorithm
+	the values used for the temperature, equillibrium and cooling rate are
+	based on Yannis and Younhyung paper
+ **/
 
 
 package qp.optimizer;
@@ -91,10 +95,11 @@ public class SARandomOptimizer{
 
 	int minUnchanged = 0;
 
-	// Loop through while not frozen
+	// Loop through while not frozen when temperature is above 1 and minimum is unchanged for 4 stages
 	while (temparature >= 1 && minUnchanged < 4){
 	    if(numJoin !=0){
-			for(int j=0;j<NUMITER;j++) {  // equillibrium
+	    	// Checking for equillinrium NUMITER = 16 * number of joins
+			for(int j=0;j<NUMITER;j++) { 
 	 			System.out.println("---------------while--------");
 			    Operator initPlanCopy = (Operator) initPlan.clone();
 			    minNeighbor = getNeighbor(initPlanCopy);
@@ -105,6 +110,7 @@ public class SARandomOptimizer{
 			    minNeighborCost = pc.getCost(minNeighbor);
 			    System.out.println("  "+minNeighborCost);
 
+			    //Random neighbor 
 			    for(int i=1; i < 2 * numJoin;i++){
 					initPlanCopy= (Operator) initPlan.clone();
 					Operator neighbor = getNeighbor(initPlanCopy);
@@ -119,7 +125,6 @@ public class SARandomOptimizer{
 					    minNeighbor = neighbor;
 					    minNeighborCost = neighborCost;
 					}
-					// System.out.println("-----------------for-------------");
 			    }
 
 			    int costDiff = minNeighborCost - initCost;
@@ -127,6 +132,7 @@ public class SARandomOptimizer{
 			    	initPlan = minNeighbor;
 					initCost = minNeighborCost;
 			    } else if (costDiff > 0){
+			    	// Choosing with a probability of exponent to the power of -costDiff divided of temperature
 			    	if( Math.random() <= Math.exp( -costDiff / temparature)) {
 						initPlan = minNeighbor;
 						initCost = minNeighborCost;
@@ -144,7 +150,9 @@ public class SARandomOptimizer{
 			Debug.PPrint(minNeighbor);
 			System.out.println(" "+minNeighborCost);
 	    }
-	    temparature *= 0.95;
+
+	    temparature *= 0.95; //Reducing temperature
+
 	    if(minNeighborCost < MINCOST){
 			MINCOST = minNeighborCost;
 			finalPlan = minNeighbor;

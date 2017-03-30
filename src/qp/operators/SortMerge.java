@@ -71,6 +71,7 @@ public class SortMerge extends Join{
             leftfilenum++;
             lfname = "SMTEemp-Left-" + String.valueOf(leftfilenum);
             try{
+                // Sorting the left table based on the index and saving it to the disk
                 ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(lfname));
                 ArrayList<Tuple> Rlist = new ArrayList<Tuple>();
                 Tuple next = left.iteratorNext();
@@ -89,7 +90,6 @@ public class SortMerge extends Join{
 
                 Iterator itr=Rlist.iterator();
 
-                //traverse elements of ArrayList object
                 while(itr.hasNext()){
                     Tuple st=(Tuple)itr.next();
                     leftpage.add(st);
@@ -105,6 +105,7 @@ public class SortMerge extends Join{
         if (!right.open()) {
             return false;
         } else {
+            // Sorting the right table based on the index and saving it to the disk
             rightfilenum++;
             rfname = "SMTEemp-Right-" + String.valueOf(rightfilenum);
             try{
@@ -175,6 +176,7 @@ public class SortMerge extends Join{
         Tuple output = null;
         boolean toReturnOutput = false;
 
+        // loop while both the tables haven't been completely read
         while (!eosl || !eosr ) {
             if (lcurs < leftbatchsize) {
                 nextLeft = leftbatch.elementAt(lcurs);
@@ -187,12 +189,13 @@ public class SortMerge extends Join{
             int leftIndexValue = (Integer) nextLeft.dataAt(leftindex);
             int rightIndexValue = (Integer) nextRight.dataAt(rightindex);
 
-
+            // If equal join the tuples and set return to true
             if (leftIndexValue == rightIndexValue) {
                 output = nextLeft.joinWith(nextRight);
                 toReturnOutput = true;
             }
 
+            //Increasing the index after reading
             if(!eosl && !eosr){
                 if (leftIndexValue < rightIndexValue) {
                     lcurs++;
