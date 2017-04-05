@@ -59,9 +59,6 @@ public class NestedJoin extends Join{
 		
 		outbatch = new Batch(batchsize);
 
-		System.out.print("Nested Join: ");
-		Debug.PPrint(con);
-		System.out.println();
 
 		// load first S tuple
 		if(!right.open()){
@@ -126,11 +123,13 @@ public class NestedJoin extends Join{
 			outbatch.add(nextTuple);
 		}
 		for (int i = 1; i < batchsize; i ++){
+			nextTuple = iteratorNext();
 			// add tuple if not null;
 			if (nextTuple != null){
-				nextTuple = iteratorNext();
+				outbatch.add(nextTuple);
+			} else {
+				break;
 			}
-			outbatch.add(nextTuple);
 		}
 		return outbatch;
     }
